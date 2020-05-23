@@ -1,0 +1,4 @@
+1,New Year,0,1,1
+2,Australian Day,2,1,26
+3,Queen's Birthday,1,6,2,1
+4,Invalid Holiday,99,1,1,1

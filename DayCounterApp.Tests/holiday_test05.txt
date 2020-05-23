@@ -1,0 +1,7 @@
+1,New Year,2,1,1
+2,Australian Day,2,1,26
+3,Anzac Day,0,4,25
+4,Queen's Birthday,1,6,2,1
+5,Labour Day,1,10,1,1
+6,Christmas Day,2,12,25
+7,Boxing Day,2,12,26
