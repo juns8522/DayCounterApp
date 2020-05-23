@@ -14,7 +14,7 @@ namespace DayCounterApp.Api.Models
         public int DayOfWeek { get; set; }
         public HolidayFixedWeekday()
         {
-            Type = (int)HolidayTypeEn.FIXED_WEEKDAY;
+            Type = (int)HolidayTypeEn.FixedWeekday;
         }
         public HolidayFixedWeekday(string[] arr) 
         {

@@ -13,7 +13,7 @@ namespace DayCounterApp.Api.Models
         public int Day { get; set; }
         public HolidayAdditionalDate()
         {
-            Type = (int)HolidayTypeEn.ADDITIONAL_DATE;
+            Type = (int)HolidayTypeEn.AdditionalDate;
         }
         public HolidayAdditionalDate(string[] arr) 
         {

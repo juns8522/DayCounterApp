@@ -2,7 +2,7 @@
 {
     public enum DataSourceTypeEn
     {
-        CSV,
-        DATABASE
+        Csv,
+        Database
     }
 }

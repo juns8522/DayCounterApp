@@ -11,11 +11,11 @@ namespace DayCounterApp.Api.Factories
         {
             switch(type)
             {
-                case (int)HolidayTypeEn.FIXED_DATE:
+                case (int)HolidayTypeEn.FixedDate:
                     return new Holiday();
-                case (int)HolidayTypeEn.FIXED_WEEKDAY:
+                case (int)HolidayTypeEn.FixedWeekday:
                     return new HolidayFixedWeekday();
-                case (int)HolidayTypeEn.ADDITIONAL_DATE:
+                case (int)HolidayTypeEn.AdditionalDate:
                     return new HolidayAdditionalDate();
                 default:
                     throw new InvalidDataException();
@@ -28,11 +28,11 @@ namespace DayCounterApp.Api.Factories
 
             switch (type)
             {
-                case (int)HolidayTypeEn.FIXED_DATE:
+                case (int)HolidayTypeEn.FixedDate:
                     return new Holiday(arr);
-                case (int)HolidayTypeEn.FIXED_WEEKDAY:
+                case (int)HolidayTypeEn.FixedWeekday:
                     return new HolidayFixedWeekday(arr);
-                case (int)HolidayTypeEn.ADDITIONAL_DATE:
+                case (int)HolidayTypeEn.AdditionalDate:
                     return new HolidayAdditionalDate(arr);
                 default:
                     throw new InvalidDataException();

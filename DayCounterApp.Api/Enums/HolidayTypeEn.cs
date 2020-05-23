@@ -2,8 +2,8 @@
 {
     public enum HolidayTypeEn
     {
-        FIXED_DATE,
-        FIXED_WEEKDAY,
-        ADDITIONAL_DATE
+        FixedDate,
+        FixedWeekday,
+        AdditionalDate
     }
 }

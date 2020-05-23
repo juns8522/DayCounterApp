@@ -13,9 +13,9 @@ namespace DayCounterApp.Api.Factories
             {
                 switch (srcType)
                 {
-                    case (int)DataSourceTypeEn.CSV:
+                    case (int)DataSourceTypeEn.Csv:
                         return new CsvHelperHoliday() as CsvHelper<T>;
-                    case (int)DataSourceTypeEn.DATABASE:
+                    case (int)DataSourceTypeEn.Database:
                         return new DbHelperHoliday() as DbHelper<T>;
                     default:
                         throw new NotImplementedException();
@@ -31,9 +31,9 @@ namespace DayCounterApp.Api.Factories
             {
                 switch (srcType)
                 {
-                    case (int)DataSourceTypeEn.CSV:
+                    case (int)DataSourceTypeEn.Csv:
                         return new CsvHelperHoliday(src) as CsvHelper<T>;
-                    case (int)DataSourceTypeEn.DATABASE:
+                    case (int)DataSourceTypeEn.Database:
                         return new DbHelperHoliday() as DbHelper<T>;
                     default:
                         throw new NotImplementedException();
