@@ -10,10 +10,36 @@ namespace DayCounterApp.Api
 {
     public class DayCounter
     {
-        public IEnumerable<IHoliday> Holidays { get; set; }
+        private IEnumerable<IHoliday> _holidays;
+        private List<List<IHoliday>> _holidaysEachMonth;
+        private List<SortedList<int, HolidayAdditionalDate>> _holidaysAdditionalDateMonths;
+
+        public IEnumerable<IHoliday> Holidays 
+        {
+            set
+            {
+                _holidays = value;
+                _holidaysEachMonth = new List<List<IHoliday>>();
+                _holidaysAdditionalDateMonths = new List<SortedList<int, HolidayAdditionalDate>>();
+
+                for (int i = 0; i <= 12; i++)
+                {
+                    _holidaysEachMonth.Add(new List<IHoliday>());
+                    _holidaysAdditionalDateMonths.Add(new SortedList<int, HolidayAdditionalDate>());
+                }
+
+                foreach (var holiday in _holidays)
+                {
+                    if(holiday is HolidayAdditionalDate)
+                        _holidaysAdditionalDateMonths[holiday.Month].Add(((HolidayAdditionalDate)holiday).Day, (HolidayAdditionalDate)holiday);
+                    else
+                        _holidaysEachMonth[holiday.Month].Add(holiday);
+                }
+            }
+        }
 
         public DayCounter()
-        {}
+        { }
 
         public DayCounter(IEnumerable<IHoliday> holidays)
         {
@@ -68,7 +94,7 @@ namespace DayCounterApp.Api
         public async Task<int> GetNumHolidaysInWeekdays(DateTime fromDt, DateTime toDt)
         {
             int numHolidays = 0;
-            if (Holidays == null || Holidays.Count() == 0)
+            if (_holidays == null || _holidays.Count() == 0)
                 return numHolidays;
 
             List<Task<int>> tasks = new List<Task<int>>();
@@ -102,22 +128,53 @@ namespace DayCounterApp.Api
         {
             int count = 0;
 
-            foreach(var holiday in Holidays)
+            for(int i = 1; i < _holidaysEachMonth.Count(); i++)
             {
-                if(holiday.Type == (int)HolidayTypeEn.FixedDate)
+                //If there is no "AdditionalDate" type holiday
+                if (_holidaysAdditionalDateMonths[i].Count == 0)
                 {
-                    if (IsHolidayFixedDateInWeekdays(fromDt, toDt, year, (Holiday)holiday))
-                        count++;
+                    foreach (var holiday in _holidaysEachMonth[i])
+                    {
+                        if (holiday is Holiday)
+                        {
+                            if (IsHolidayFixedDateInWeekdays(fromDt, toDt, year, (Holiday)holiday))
+                                count++;
+                        }
+                        else if (holiday is HolidayFixedWeekday)
+                        {
+                            DateTime actualDt;
+                            if (IsHolidayFixedWeekdayInWeekdays(fromDt, toDt, year, (HolidayFixedWeekday)holiday, out actualDt))
+                                count++;
+                        }
+                    }
                 }
-                else if (holiday.Type == (int)HolidayTypeEn.FixedWeekday)
+                //Else (there is at least one "AdditionalDate" type holiday)
+                else
                 {
-                    if (IsHolidayFixedWeekdayInWeekdays(fromDt, toDt, year, (HolidayFixedWeekday)holiday))
-                        count++;
-                }
-                else if (holiday.Type == (int)HolidayTypeEn.AdditionalDate)
-                {
-                    if (IsHolidayAdditionalDateInWeekdays(fromDt, toDt, year, (HolidayAdditionalDate)holiday))
-                        count++;
+                    int[] days = new int[32];
+
+                    foreach (var holiday in _holidaysEachMonth[i])
+                    {
+                        if (holiday is Holiday)
+                        {
+                            if (IsHolidayFixedDateInWeekdays(fromDt, toDt, year, (Holiday)holiday))
+                            {
+                                count++;
+                                days[((Holiday)holiday).Day] = 1;
+                            }
+                        }
+                        else if (holiday is HolidayFixedWeekday)
+                        {
+                            DateTime actualDt;
+                            if (IsHolidayFixedWeekdayInWeekdays(fromDt, toDt, year, (HolidayFixedWeekday)holiday, out actualDt))
+                            {
+                                count++;
+                                days[actualDt.Day] = 1;
+                            }
+                        }
+                    }
+
+                    count = count + GetNumHolidayAdditionalDateInMonth(fromDt, toDt, year, days, _holidaysAdditionalDateMonths[i]);
                 }
             }
 
@@ -132,16 +189,73 @@ namespace DayCounterApp.Api
             return false;
         }
 
-        public bool IsHolidayFixedWeekdayInWeekdays(DateTime fromDt, DateTime toDt, int year, HolidayFixedWeekday holiday)
+        public bool IsHolidayFixedWeekdayInWeekdays(DateTime fromDt, DateTime toDt, int year, HolidayFixedWeekday holiday, out DateTime actualDt)
         {
+            actualDt = DateTime.MinValue;
+
             if (holiday.DayOfWeek == (int)DayOfWeek.Sunday || holiday.DayOfWeek == (int)DayOfWeek.Saturday)
                 return false;
 
             var dt = GetHolidayFixedWeekday(year, holiday);
+            actualDt = dt;
 
-            if(dt >= fromDt && dt <= toDt)
+            if (dt >= fromDt && dt <= toDt)
                 return true;
             return false;
+        }
+
+        public int GetNumHolidayAdditionalDateInMonth(DateTime fromDt, DateTime toDt, int year, int[] days, SortedList<int, HolidayAdditionalDate> holidayAdditionalDates)
+        {
+            int num = 0;
+            
+            foreach(var keyValue in holidayAdditionalDates)
+            {
+                var holiday = keyValue.Value;
+                DateTime dt = new DateTime(year, holiday.Month, holiday.Day);
+
+                if (dt < fromDt || dt > toDt)
+                    break;
+
+                if(dt.DayOfWeek == DayOfWeek.Saturday ||
+                   dt.DayOfWeek == DayOfWeek.Sunday ||
+                   days[dt.Day] == 1)
+                {
+                    bool breakAll = false;
+
+                    int daysInMonth = DateTime.DaysInMonth(year, dt.Month);
+
+                    while(true)
+                    {
+                        if(dt.Day >= daysInMonth ||
+                           dt.AddDays(1) > toDt)
+                        {
+                            breakAll = true;
+                            break;
+                        }
+
+                        dt = dt.AddDays(1);
+
+                        if (dt.DayOfWeek != DayOfWeek.Saturday &&
+                           dt.DayOfWeek != DayOfWeek.Sunday &&
+                           days[dt.Day] != 1)
+                        {
+                            days[dt.Day] = 1;
+                            num++;
+                            break;
+                        }
+                    }
+
+                    if (breakAll)
+                        break;
+                }
+                else
+                {
+                    days[dt.Day] = 1;
+                    num++;
+                }
+            }
+
+            return num;
         }
 
         public bool IsHolidayAdditionalDateInWeekdays(DateTime fromDt, DateTime toDt, int year, HolidayAdditionalDate holiday)

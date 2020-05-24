@@ -120,6 +120,15 @@ namespace DayCounterApp.Tests
 
             result = dayCounter.IsHolidayFixedDateInWeekdays(frDt, toDt, 2015, holiday);
             Assert.IsTrue(result == false);
+
+            toDt = new DateTime(2020, 4, 14);
+            result = dayCounter.IsHolidayFixedDateInWeekdays(frDt, toDt, 2020, holiday);
+            Assert.IsTrue(result == false);
+
+            frDt = new DateTime(2020, 5, 14);
+            toDt = new DateTime(2020, 6, 14);
+            result = dayCounter.IsHolidayFixedDateInWeekdays(frDt, toDt, 2020, holiday);
+            Assert.IsTrue(result == false);
         }
 
         [Test]
@@ -175,7 +184,7 @@ namespace DayCounterApp.Tests
         }
 
         [Test]
-        public void Test04_IsHolidayFixedWeekdayInWeekdays()
+        public void Test04_GetHolidayFixedWeekday()
         {
             var dayCounter = new DayCounter();
 
@@ -227,15 +236,139 @@ namespace DayCounterApp.Tests
         }
 
         [Test]
-        public async Task Test99_WorkingDaysAsync()
+        public void Test05_IsHolidayFixedWeekdayInWeekdays()
+        {
+            var dayCounter = new DayCounter();
+
+            var holiday = new HolidayFixedWeekday
+            {
+                Id = 0,
+                Name = "Queen's Birthday",
+                Type = (int)HolidayTypeEn.FixedWeekday,
+                Month = 6,
+                Week = 2,
+                DayOfWeek = (int)DayOfWeek.Monday
+            };
+
+            var frDt = new DateTime(2015, 1, 1);
+            var toDt = new DateTime(2020, 12, 31);
+            DateTime actualDate;
+            var result = dayCounter.IsHolidayFixedWeekdayInWeekdays(frDt, toDt, 2020, holiday, out actualDate);
+            Assert.IsTrue(result);
+            Assert.IsTrue(actualDate.Year == 2020);
+            Assert.IsTrue(actualDate.Month == 6);
+            Assert.IsTrue(actualDate.Day == 8);
+
+            toDt = new DateTime(2020, 6, 1);
+            result = dayCounter.IsHolidayFixedWeekdayInWeekdays(frDt, toDt, 2020, holiday, out actualDate);
+            Assert.IsFalse(result);
+
+            frDt = new DateTime(2020, 7, 1);
+            toDt = new DateTime(2020, 12, 31);
+            result = dayCounter.IsHolidayFixedWeekdayInWeekdays(frDt, toDt, 2020, holiday, out actualDate);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void Test06_GetNumHolidayAdditionalDateInMonth()
+        {
+            var dayCounter = new DayCounter();
+            SortedList<int, HolidayAdditionalDate> list = new SortedList<int, HolidayAdditionalDate>();
+            list.Add(26, new HolidayAdditionalDate
+            {
+                Id = 0,
+                Name = "Boxing Day",
+                Type = (int)HolidayTypeEn.AdditionalDate,
+                Month = 12,
+                Day = 26
+            });
+            list.Add(25, new HolidayAdditionalDate
+            {
+                Id = 0,
+                Name = "Christmas Day",
+                Type = (int)HolidayTypeEn.AdditionalDate,
+                Month = 12,
+                Day = 25
+            });
+            var frDt = new DateTime(2020, 1, 1);
+            var toDt = new DateTime(2021, 12, 31);
+            var year = 2020;
+            var days = new int[32];
+
+            var num = dayCounter.GetNumHolidayAdditionalDateInMonth(frDt, toDt, year, days, list);
+            Assert.IsTrue(num == 2);
+
+            var days2 = new int[32];
+            toDt = new DateTime(2020, 12, 28);
+            num = dayCounter.GetNumHolidayAdditionalDateInMonth(frDt, toDt, year, days2, list);
+            Assert.IsTrue(num == 2);
+
+            var days3 = new int[32];
+            toDt = new DateTime(2020, 12, 27);
+            num = dayCounter.GetNumHolidayAdditionalDateInMonth(frDt, toDt, year, days3, list);
+            Assert.IsTrue(num == 1);
+
+            var days4 = new int[32];
+            toDt = new DateTime(2020, 12, 26);
+            num = dayCounter.GetNumHolidayAdditionalDateInMonth(frDt, toDt, year, days4, list);
+            Assert.IsTrue(num == 1);
+
+            var days5 = new int[32];
+            toDt = new DateTime(2020, 12, 25);
+            num = dayCounter.GetNumHolidayAdditionalDateInMonth(frDt, toDt, year, days5, list);
+            Assert.IsTrue(num == 1);
+
+            var days6 = new int[32];
+            toDt = new DateTime(2020, 12, 24);
+            num = dayCounter.GetNumHolidayAdditionalDateInMonth(frDt, toDt, year, days6, list);
+            Assert.IsTrue(num == 0);
+        }
+
+        [Test]
+        public async Task Test07_WorkingDays()
         {
             var dataHelper = DataHelperFactory<IHoliday>.GetDataHelper((int)DataSourceTypeEn.Csv, "holiday_test05.txt");
             var holidays = await dataHelper.Get();
             var dayCounter = new DayCounter(holidays);
 
-            var frDt = new DateTime(2020, 1, 1);
+            var frDt = new DateTime(2019, 12, 31);
             var toDt = new DateTime(2020, 1, 4);
-            var result = dayCounter.GetWorkingDays(frDt, toDt);
+            var numWeekdays = await dayCounter.GetWorkingDays(frDt, toDt);
+            Assert.IsTrue(numWeekdays == 2);
+
+            toDt = new DateTime(2020, 2, 1);
+            numWeekdays = await dayCounter.GetWorkingDays(frDt, toDt);
+            Assert.IsTrue(numWeekdays == 21);
+
+            toDt = new DateTime(2021, 1, 1);
+            numWeekdays = await dayCounter.GetWorkingDays(frDt, toDt);
+            Assert.IsTrue(numWeekdays == 256);
+
+            frDt = new DateTime(2018, 12, 31);
+            toDt = new DateTime(2020, 1, 1);
+            numWeekdays = await dayCounter.GetWorkingDays(frDt, toDt);
+            Assert.IsTrue(numWeekdays == 254);
+
+            toDt = new DateTime(2021, 1, 1);
+            numWeekdays = await dayCounter.GetWorkingDays(frDt, toDt);
+            Assert.IsTrue(numWeekdays == 510);
+        }
+
+        [Test]
+        public async Task Test08_WorkingDays2()
+        {
+            var Start = DateTime.UtcNow;
+            var dataHelper = DataHelperFactory<IHoliday>.GetDataHelper((int)DataSourceTypeEn.Csv, "holiday_test05.txt");
+            var holidays = await dataHelper.Get();
+            var dayCounter = new DayCounter(holidays);
+
+            var frDt = DateTime.MinValue;
+            var toDt = DateTime.MaxValue;
+            var numWeekdays = await dayCounter.GetWorkingDays(frDt, toDt);
+            var end = DateTime.UtcNow;
+
+            var diff = end - Start;
+            Assert.IsTrue(diff.Seconds < 1);
         }
     }
 }
