@@ -15,6 +15,8 @@ namespace DayCounterApp.Api
 {
     public class Startup
     {
+        readonly string _allowSpecificOrigins = "AllowSpecificOrigins";
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -25,6 +27,14 @@ namespace DayCounterApp.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: _allowSpecificOrigins,
+                    builder =>
+                    {
+                        builder.WithOrigins("https://localhost:44308");
+                    });
+            });
             services.AddControllers();
         }
 
@@ -35,6 +45,8 @@ namespace DayCounterApp.Api
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseCors(_allowSpecificOrigins);
 
             app.UseHttpsRedirection();
 

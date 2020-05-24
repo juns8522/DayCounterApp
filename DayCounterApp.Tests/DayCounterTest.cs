@@ -5,7 +5,6 @@ using DayCounterApp.Api.Factories;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using DayCounterApp.Api;
 
@@ -21,8 +20,6 @@ namespace DayCounterApp.Tests
         [Test]
         public void Test01_WeekDays()
         {
-            //var dataHelper = DataHelperFactory<IHoliday>.GetDataHelper((int)DataSourceTypeEn.Csv, "holiday_test01.txt");
-            //var holidays = await dataHelper.Get();
             var dayCounter = new DayCounter();
 
             var frDt = new DateTime(2020, 1, 1);
